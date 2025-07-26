@@ -3,6 +3,6 @@
   tasks:
     - name: Update apt packages
       apt:
-        upgrade: yes
-        update_cache: yes
+        upgrade: 'yes'
+        update_cache: 'yes'
 '
