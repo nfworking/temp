@@ -4,59 +4,54 @@
   become: true
 
   vars:
-    docker_apt_key_url: https://download.docker.com/linux/ubuntu/gpg
-    docker_repo: "deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
+    docker_gpg_url: https://download.docker.com/linux/ubuntu/gpg
+    docker_keyring_path: /etc/apt/keyrings/docker.gpg
+    docker_repo_path: /etc/apt/sources.list.d/docker.list
+    docker_repo_entry: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
 
   tasks:
-    - name: Ensure required directories exist
+    - name: Ensure apt keyring directory exists
       file:
         path: /etc/apt/keyrings
         state: directory
         mode: '0755'
 
-    - name: Add Docker GPG key
-      ansible.builtin.get_url:
-        url: "{{ docker_apt_key_url }}"
-        dest: /etc/apt/keyrings/docker.gpg
+    - name: Download Docker GPG key to keyring
+      get_url:
+        url: "{{ docker_gpg_url }}"
+        dest: "{{ docker_keyring_path }}"
         mode: '0644'
 
-    - name: Add Docker APT repository
-      apt_repository:
-        repo: "{{ docker_repo }}"
-        filename: docker
-        state: present
+    - name: Add Docker repository manually
+      copy:
+        dest: "{{ docker_repo_path }}"
+        content: "{{ docker_repo_entry }}\n"
+        mode: '0644'
 
-    - name: Update APT package cache
+    - name: Update apt cache
       apt:
         update_cache: yes
-        cache_valid_time: 3600
 
-    - name: Install required packages
+    - name: Install Docker and useful tools
       apt:
         name:
-          - apt-transport-https
-          - ca-certificates
-          - curl
-          - gnupg
-          - lsb-release
-          - software-properties-common
-          - nano
-          - git
-          - btop
           - docker-ce
           - docker-ce-cli
           - containerd.io
           - docker-buildx-plugin
           - docker-compose-plugin
+          - nano
+          - git
+          - btop
         state: present
 
-    - name: Ensure svradmin is added to docker group
+    - name: Add svradmin user to docker group
       user:
         name: svradmin
         groups: docker
         append: yes
 
-    - name: Enable and start Docker service
+    - name: Enable and start Docker
       systemd:
         name: docker
         enabled: yes
