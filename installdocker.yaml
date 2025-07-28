@@ -22,11 +22,12 @@
         dest: "{{ docker_keyring_path }}"
         mode: '0644'
 
-    - name: Add Docker APT repository
-      copy:
-        dest: "{{ docker_repo_path }}"
-        content: "{{ docker_repo_entry }}\n"
-        mode: '0644'
+    - name: Write Docker APT repository manually
+       shell: |
+         echo "{{ docker_repo_entry }}" > /etc/apt/sources.list.d/docker.list
+         args:
+         executable: /bin/bash
+ 
 
     - name: Update apt cache
       apt:
