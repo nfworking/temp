@@ -1,5 +1,5 @@
 ---
-- name: Setup Docker environment on Ubuntu
+- name: Install Docker and tools on Ubuntu
   hosts: all
   become: true
 
@@ -7,22 +7,22 @@
     docker_gpg_url: https://download.docker.com/linux/ubuntu/gpg
     docker_keyring_path: /etc/apt/keyrings/docker.gpg
     docker_repo_path: /etc/apt/sources.list.d/docker.list
-    docker_repo_entry: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
+    docker_repo_entry: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu jammy stable"
 
   tasks:
-    - name: Ensure apt keyring directory exists
+    - name: Ensure apt keyrings directory exists
       file:
         path: /etc/apt/keyrings
         state: directory
         mode: '0755'
 
-    - name: Download Docker GPG key to keyring
+    - name: Download Docker GPG key
       get_url:
         url: "{{ docker_gpg_url }}"
         dest: "{{ docker_keyring_path }}"
         mode: '0644'
 
-    - name: Add Docker repository manually
+    - name: Add Docker APT repository
       copy:
         dest: "{{ docker_repo_path }}"
         content: "{{ docker_repo_entry }}\n"
@@ -32,7 +32,7 @@
       apt:
         update_cache: yes
 
-    - name: Install Docker and useful tools
+    - name: Install Docker, Compose plugin, and tools
       apt:
         name:
           - docker-ce
@@ -45,7 +45,7 @@
           - btop
         state: present
 
-    - name: Add svradmin user to docker group
+    - name: Add svradmin to docker group
       user:
         name: svradmin
         groups: docker
@@ -54,5 +54,5 @@
     - name: Enable and start Docker
       systemd:
         name: docker
-        enabled: yes
+        enabled: true
         state: started
