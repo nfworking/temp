@@ -1,4 +1,8 @@
 ---
+# Playbook to install Docker and essential tools on Ubuntu systems.
+# It handles adding the Docker GPG key, setting up the repository,
+# installing Docker components, and adding a user to the Docker group.
+
 - name: Install Docker and tools on Ubuntu
   hosts: all
   become: true
@@ -11,30 +15,29 @@
 
   tasks:
     - name: Ensure apt keyrings directory exists
-      file:
+      ansible.builtin.file:
         path: /etc/apt/keyrings
         state: directory
         mode: '0755'
 
     - name: Download Docker GPG key
-      get_url:
+      ansible.builtin.get_url:
         url: "{{ docker_gpg_url }}"
         dest: "{{ docker_keyring_path }}"
         mode: '0644'
 
-    - name: Write Docker APT repository manually
-       shell: |
-         echo "{{ docker_repo_entry }}" > /etc/apt/sources.list.d/docker.list
-         args:
-         executable: /bin/bash
- 
+    - name: Add Docker APT repository
+      ansible.builtin.copy:
+        dest: "{{ docker_repo_path }}"
+        content: "{{ docker_repo_entry }}\n"
+        mode: '0644'
 
     - name: Update apt cache
-      apt:
+      ansible.builtin.apt:
         update_cache: yes
 
     - name: Install Docker, Compose plugin, and tools
-      apt:
+      ansible.builtin.apt:
         name:
           - docker-ce
           - docker-ce-cli
@@ -47,13 +50,13 @@
         state: present
 
     - name: Add svradmin to docker group
-      user:
+      ansible.builtin.user:
         name: svradmin
         groups: docker
         append: yes
 
     - name: Enable and start Docker
-      systemd:
+      ansible.builtin.systemd:
         name: docker
         enabled: true
         state: started
