@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TARGET="svradmin@prod02"
+TARGET="svradmin@172.168.1.4"
 
 ssh "$TARGET" 'bash -s' <<'ENDSSH'
 set -e
